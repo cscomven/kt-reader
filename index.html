@@ -1,610 +1,566 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">    <link rel="stylesheet" href="style.css">
-    <style>
-       html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100dvh; /* Uses 'Dynamic Viewport Height' for mobile */
-            overflow: hidden; /* Prevents the whole app from bouncing */
-            display: flex;
-            flex-direction: column;
-            background-color: #1a365d;
-        }
-
-        header {
-            background: #1a365d;
-            display: flex;
-            flex-wrap: wrap; /* Allows wrapping on small screens */
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px 15px;
-            /* Respects the status bar on Home Screen apps */
-            padding-top: max(env(safe-area-inset-top), 10px);
-            padding-left: max(env(safe-area-inset-left), 15px);
-            padding-right: max(env(safe-area-inset-right), 15px);
-            flex-shrink: 0; /* Prevents the header from being squashed */
-            z-index: 1000;
-        }
-
-        .reader-container {
-            display: flex;
-            flex: 1; /* Fills the remaining screen space */
-            width: 100%;
-            background: white;
-            overflow: hidden; /* Important: The container doesn't scroll, the panes do */
-            
-            /* UPDATED: Adds hardware safe area awareness plus a small text buffer */
-            padding-left: calc(env(safe-area-inset-left) + 5px);
-            /* padding-right: calc(env(safe-area-inset-right) + 3px); */
-            box-sizing: border-box;
-        }
-
-        .pane {
-            flex: 1;
-            height: 100%; /* Fills the container */
-            overflow-y: auto !important; /* Force scrolling to work */
-            -webkit-overflow-scrolling: touch; /* Smooth scrolling for iOS */
-            padding: 20px;
-            box-sizing: border-box;
-            background-color: white !important;
-            color: black !important;
-            position: relative; 
-        }
-
-        /* Ensure groups stay centered internally */
-        .nav-group, .search-group, .version-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-
-        .header-actions {
-            display: flex;
-            gap: 15px;
-        }
-
-        .icon-btn {
-            background: transparent;
-            border: 1px solid #ffffff44;
-            color: white;
-            border-radius: 4px;
-            padding: 5px 10px;
-            cursor: pointer;
-        }
-
-        /* The Overlay Styling */
-        .overlay {
-            display: none; /* Hidden by default */
-            position: absolute;
-            top: 50px; /* Right under the header */
-            left: 0;
-            right: 0;
-            background: #2d3748;
-            padding: 10px;
-            z-index: 2000;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
-
-        .overlay-content {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .font-tools button {
-            padding: 10px 20px;
-            background: #4a5568;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-weight: bold;
-        }
-
-        .close-btn {
-            background: none;
-            border: none;
-            color: #a0aec0;
-            font-size: 1.2rem;
-            margin-left: 20px;
-            cursor: pointer;
-        }    
- 
-
-        /* MOBILE SPECIFIC OVERRIDE */
-        @media (max-width: 600px) {
-            header {
-                justify-content: center;
-                gap: 10px;
-            }
-            
-            .nav-group, .version-group {
-                justify-content: center;
-            }
-
-            .search-group {
-                width: 100%;
-                justify-content: center;
-            }
-            
-            #searchInput {
-                width: 140px; /* Slimmer for portrait mobile */
-            }
-        }
-        
-        header select, 
-        #searchInput,
-        .search-group button {
-            height: 30px; /* Reduced from 36px */
-            font-size: 13px; /* Slightly smaller text */
-            padding: 0 8px;
-        }
-        button {
-            background: #3182ce;
-            color: white;
-            border: none;
-            padding: 6px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        button:hover {
-            background: #4299e1;
-        }
-        .verse:hover {
-            background-color: #f7fafc;
-        }
-        .chapter-header {
-            font-size: 1.4em;
-            font-weight: bold;
-            margin-bottom: 20px;
-            margin-top: 0;
-            color: #1a365d; /* A nice deep blue for the title */
-            border-bottom: 2px solid #e2e8f0;
-            padding-bottom: 8px;
-        }
-
-        /* Let's make the right pane slightly different just for subtle contrast, 
-        or keep it white if you prefer a perfectly clean look */
-        .pane:last-child {
-            border-left: 1px solid #e2e8f0;
-            background-color: #ffffff !important; 
-        }
-
-        .verse {
-            margin-bottom: 15px;
-            display: block;
-            color: #000000; /* Ensuring text inside the verse div is black */
-        }
-        .v-num {
-            color: #3182ce; /* Keeps the verse numbers blue so they stay distinct */
-            font-weight: bold;
-            font-size: 0.85em;
-            margin-right: 10px; 
-            display: inline-block; 
-            vertical-align: baseline;
-        }
-        .back-btn {
-            background: #e53e3e; /* Reddish color for clarity */
-            margin-bottom: 20px;
-            display: inline-block;
-        }
-        /* Standardize all header inputs/selects */
-
-        .search-group {
-            display: flex;
-            align-items: stretch; /* Forces all items to be the same height */
-            justify-content: center;
-        }
-
-        /* Base style for the three search components */
-        header select, 
-        #searchScope, 
-        #searchInput, 
-        .search-group button {
-            height: 36px;
-            margin: 0;
-            padding: 0 12px;
-            border: 1px solid #cbd5e0;
-            box-sizing: border-box;
-            font-size: 14px;
-            /* This removes the 'baseline' shift that makes buttons drop low */
-            display: flex;
-            align-items: center; 
-        }
-
-        #searchScope {
-            border-radius: 6px 0 0 6px;
-            background-color: white;
-            width: 125px;
-        }
-
-        #searchInput {
-            width: 200px;
-            border-left: none; /* Removes double border between scope and input */
-            border-right: none; /* Removes double border between input and button */
-            border-radius: 0;
-            background-color: white;
-        }
-
-        .search-group button {
-            border-radius: 0 6px 6px 0;
-            background: #3182ce;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            border: 1px solid #3182ce; /* Match button color */
-        }
-
-        .search-group button:hover {
-            background: #2b6cb0;
-        }
-        #searchInput:focus {
-            outline: none;
-            background-color: #f7fafc; /* Very light grey when typing */
-        }
-
-        /* Scope Dropdown specific rounding */
-        #searchScope {
-            border-radius: 6px 0 0 6px;
-            width: 120px;
-        }
-
-
-
-    
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
 </head>
-<body style="display: flex; flex-direction: column;">
-    <header>
-        <div class="nav-group">
-            <select id="bookSelect"></select>
-            <select id="chapterSelect"></select>
-        </div>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600;7..72,700&display=swap" rel="stylesheet">
+<style>
+  @keyframes brb-fade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes brb-pop { from { opacity: 0; transform: translateY(10px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+</style>
+</helmet>
+<div style="width:100%;height:100%;display:flex;flex-direction:column;background:{{ theme.bg0 }};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;position:relative;overflow:hidden;color:{{ theme.text }};transition:background-color .25s ease,color .25s ease">
 
-        <div class="header-actions">
-            <button onclick="toggleOverlay('searchOverlay')" class="icon-btn">🔍</button>
-            <button onclick="toggleOverlay('fontOverlay')" class="icon-btn">Aa</button>
-        </div>
+  <sc-if value="{{ loading }}" hint-placeholder-val="{{ true }}">
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;background:{{ theme.bg0 }}">
+      <div style="color:{{ theme.textFaint }};font-size:15px;font-weight:600">Loading scripture…</div>
+    </div>
+  </sc-if>
 
-        <div class="version-group">
-            <select id="versionLeft"><option value="kjv">KJV</option></select>
-            <select id="versionRight"><option value="vie1934">1934</option></select>
-        </div>
-    </header>
+  <sc-if value="{{ noData }}">
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:40px;text-align:center">
+      <div style="color:{{ theme.textFaint }};font-size:15px;font-weight:600;line-height:1.5">No translation files were found.<br/>Add at least one Bible JSON file next to this page.</div>
+    </div>
+  </sc-if>
 
-    <div id="searchOverlay" class="overlay">
-        <div class="overlay-content">
-            <select id="searchScope">
-                <option value="all">All</option>
-                <option value="ot">OT</option>
-                <option value="nt">NT</option>
-            </select>
-            <input type="text" id="searchInput" placeholder="Search..." onkeydown="if(event.key==='Enter') { runSearch(); toggleOverlay('searchOverlay'); }">
-            <button onclick="runSearch(); toggleOverlay('searchOverlay');">Search</button>
-            <button onclick="toggleOverlay('searchOverlay')" class="close-btn">✕</button>
-        </div>
+  <sc-if value="{{ ready }}">
+  <div style="display:contents">
+    <!-- Header row 1: reference -->
+    <div style="background:{{ theme.bg1 }};flex-shrink:0;border-bottom:1px solid {{ theme.border }};transition:background-color .25s ease,border-color .25s ease">
+      <div style="height:env(safe-area-inset-top)"></div>
+      <button onClick="{{ openPicker }}" style="{{ row1BtnStyle }}">
+        <span style="{{ titleStyle }}">{{ headerTitle }}</span>
+        <span style="{{ chevronStyle }}">⌄</span>
+      </button>
     </div>
 
-    <div id="fontOverlay" class="overlay">
-        <div class="overlay-content font-tools">
-            <span>Font Size:</span>
-            <button onclick="changeFontSize(-2)">A-</button>
-            <button onclick="changeFontSize(2)">A+</button>
-            <button onclick="toggleOverlay('fontOverlay')" class="close-btn">✕</button>
+    <!-- Header row 2: version control -->
+    <div style="{{ row2OuterStyle }}">
+      <sc-if value="{{ isParallel }}" hint-placeholder-val="{{ true }}">
+        <div style="{{ pillStyle }}">
+          <div style="position:absolute;left:50%;top:20%;bottom:20%;width:1px;background:{{ theme.border }}"></div>
+          <button onClick="{{ openVerLeft }}" style="{{ verBtnStyle }}">{{ leftVersionShort }} <span style="opacity:.6;font-size:10px">⌄</span></button>
+          <button onClick="{{ openVerRight }}" style="{{ verBtnStyle }}">{{ rightVersionShort }} <span style="opacity:.6;font-size:10px">⌄</span></button>
         </div>
+      </sc-if>
+      <sc-if value="{{ isSingle }}" hint-placeholder-val="{{ false }}">
+        <div style="{{ pillStyle }}">
+          <button onClick="{{ openSingleVersionSheet }}" style="{{ singleVerBtnStyle }}">{{ singleVersionShort }} <span style="opacity:.6;font-size:10px">⌄</span></button>
+        </div>
+        <button onClick="{{ swapSingleSide }}" style="{{ swapBtnStyle }}">⇄</button>
+      </sc-if>
     </div>
-    <div class="reader-container">
-        <div id="leftPane" class="pane"></div>
-        <div id="rightPane" class="pane"></div>
+
+    <!-- Reading area -->
+    <div style="flex:1;display:flex;overflow:hidden;position:relative">
+
+      <sc-if value="{{ isParallel }}" hint-placeholder-val="{{ true }}">
+        <div ref="{{ leftPaneRef }}" onScroll="{{ onLeftScroll }}" onTouchStart="{{ onLeftTouch }}" onMouseEnter="{{ onLeftEnter }}" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 15px 90px;box-sizing:border-box;background:{{ theme.bg1 }}">
+          <div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:{{ theme.accent }};margin-bottom:6px">{{ leftVersionShort }}</div>
+          <h2 style="font-family:'Literata',Georgia,serif;font-size:22px;font-weight:700;margin:0 0 16px;padding-bottom:10px;border-bottom:2px solid {{ theme.border }};color:{{ theme.text }}">{{ headerTitle }}</h2>
+          <sc-for list="{{ leftVerses }}" as="v" hint-placeholder-count="10">
+            <div id="L{{ $index }}" style="margin-bottom:15px">
+              <sc-if value="{{ showVerseNumbers }}" hint-placeholder-val="{{ true }}">
+                <span style="color:{{ theme.accent }};font-weight:700;font-size:12px;margin-right:6px;vertical-align:text-top;font-family:-apple-system,system-ui,sans-serif">{{ v.num }}</span>
+              </sc-if>
+              <span style="font-family:'Literata',Georgia,serif;line-height:1.85;font-size:{{ fontSize }}px;color:{{ theme.verseText }}">{{ v.text }}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="width:1px;background:{{ theme.border }};flex-shrink:0"></div>
+
+        <div ref="{{ rightPaneRef }}" onScroll="{{ onRightScroll }}" onTouchStart="{{ onRightTouch }}" onMouseEnter="{{ onRightEnter }}" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 15px 90px;box-sizing:border-box;background:{{ theme.bg1 }}">
+          <div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:{{ theme.accent }};margin-bottom:6px">{{ rightVersionShort }}</div>
+          <h2 style="font-family:'Literata',Georgia,serif;font-size:22px;font-weight:700;margin:0 0 16px;padding-bottom:10px;border-bottom:2px solid {{ theme.border }};color:{{ theme.text }}">{{ headerTitle }}</h2>
+          <sc-for list="{{ rightVerses }}" as="v" hint-placeholder-count="10">
+            <div id="R{{ $index }}" style="margin-bottom:15px">
+              <sc-if value="{{ showVerseNumbers }}" hint-placeholder-val="{{ true }}">
+                <span style="color:{{ theme.accent }};font-weight:700;font-size:12px;margin-right:6px;vertical-align:text-top;font-family:-apple-system,system-ui,sans-serif">{{ v.num }}</span>
+              </sc-if>
+              <span style="font-family:'Literata',Georgia,serif;line-height:1.85;font-size:{{ fontSize }}px;color:{{ theme.verseText }}">{{ v.text }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isSingle }}" hint-placeholder-val="{{ false }}">
+        <div ref="{{ singlePaneRef }}" onScroll="{{ onSingleScroll }}" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 15px 90px;box-sizing:border-box;background:{{ theme.bg1 }}">
+          <div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:{{ theme.accent }};margin-bottom:6px">{{ singleVersionShort }}</div>
+          <h2 style="font-family:'Literata',Georgia,serif;font-size:22px;font-weight:700;margin:0 0 16px;padding-bottom:10px;border-bottom:2px solid {{ theme.border }};color:{{ theme.text }}">{{ headerTitle }}</h2>
+          <sc-for list="{{ singleVerses }}" as="v" hint-placeholder-count="10">
+            <div style="margin-bottom:15px">
+              <sc-if value="{{ showVerseNumbers }}" hint-placeholder-val="{{ true }}">
+                <span style="color:{{ theme.accent }};font-weight:700;font-size:12px;margin-right:6px;vertical-align:text-top;font-family:-apple-system,system-ui,sans-serif">{{ v.num }}</span>
+              </sc-if>
+              <span style="font-family:'Literata',Georgia,serif;line-height:1.85;font-size:{{ fontSize }}px;color:{{ theme.verseText }}">{{ v.text }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <!-- FAB speed-dial -->
+      <div style="position:absolute;right:16px;bottom:22px;z-index:53;display:flex;flex-direction:column;align-items:center;gap:10px">
+        <button onClick="{{ toggleDarkMode }}" style="{{ miniStyle }}">
+          <sc-if value="{{ isLight }}" hint-placeholder-val="{{ true }}">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M20.5 14.5A8.5 8.5 0 119.5 3.5a7 7 0 0011 11z" fill="{{ theme.accent }}"/></svg>
+          </sc-if>
+          <sc-if value="{{ isDark }}" hint-placeholder-val="{{ false }}">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.5" fill="{{ theme.accent }}"/><g stroke="{{ theme.accent }}" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1.5" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22.5"/><line x1="1.5" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22.5" y2="12"/><line x1="4.4" y1="4.4" x2="6.2" y2="6.2"/><line x1="17.8" y1="17.8" x2="19.6" y2="19.6"/><line x1="4.4" y1="19.6" x2="6.2" y2="17.8"/><line x1="17.8" y1="6.2" x2="19.6" y2="4.4"/></g></svg>
+          </sc-if>
+        </button>
+        <button onClick="{{ toggleViewMode }}" style="{{ miniStyle }}">
+          <sc-if value="{{ isParallel }}" hint-placeholder-val="{{ true }}">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="7" height="16" rx="1.5" stroke="{{ theme.accent }}" stroke-width="2"/><rect x="14" y="4" width="7" height="16" rx="1.5" fill="{{ theme.accent }}"/></svg>
+          </sc-if>
+          <sc-if value="{{ isSingle }}" hint-placeholder-val="{{ false }}">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="8" height="16" rx="1.5" stroke="{{ theme.accent }}" stroke-width="2"/><rect x="13" y="4" width="8" height="16" rx="1.5" stroke="{{ theme.accent }}" stroke-width="2"/></svg>
+          </sc-if>
+        </button>
+        <button onClick="{{ openFontPopover }}" style="{{ miniStyle }}">Aa</button>
+        <button onClick="{{ openSearchModal }}" style="{{ miniStyle }}">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="{{ theme.accent }}" stroke-width="2.2"/><line x1="16.5" y1="16.5" x2="21" y2="21" stroke="{{ theme.accent }}" stroke-width="2.2" stroke-linecap="round"/></svg>
+        </button>
+        <button onClick="{{ toggleFab }}" style="{{ mainFabStyle }}">
+          <sc-if value="{{ fabOpen }}" hint-placeholder-val="{{ false }}">
+            <span style="color:#fff;font-size:22px;line-height:1">✕</span>
+          </sc-if>
+          <sc-if value="{{ fabClosed }}" hint-placeholder-val="{{ true }}">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none"><line x1="4" y1="7" x2="20" y2="7" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="15" cy="7" r="2.5" fill="#fff"/><line x1="4" y1="17" x2="20" y2="17" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="9" cy="17" r="2.5" fill="#fff"/></svg>
+          </sc-if>
+        </button>
+      </div>
+
+      <!-- Font size popover -->
+      <sc-if value="{{ showFontPopover }}">
+        <div onClick="{{ closeFontPopover }}" style="position:absolute;inset:0;z-index:56"></div>
+        <div style="position:absolute;right:16px;bottom:88px;z-index:57;background:{{ theme.modalBg }};border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,0.18);padding:14px 16px;width:190px;animation:brb-pop .15s ease">
+          <div style="font-size:11px;font-weight:700;color:{{ theme.textFaint }};text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Text size</div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <button onClick="{{ decFont }}" style="{{ fontStepBtnStyle }}">A-</button>
+            <div style="flex:1;text-align:center;font-size:13px;font-weight:700;color:{{ theme.textSub }}">{{ fontSize }}px</div>
+            <button onClick="{{ incFont }}" style="{{ fontStepBtnStyle }}font-size:17px;">A+</button>
+          </div>
+        </div>
+      </sc-if>
     </div>
 
-    <script>
-        let bibles = { kjv: null, esv: null, vie1934: null };
-        let currentBookIdx = 0;
-        let currentChapterIdx = 0;
-        let isSyncing = false;
-        let activePane = null;
+    <!-- Centered modals -->
+    <sc-if value="{{ showPicker }}">
+      <div onClick="{{ closeSheet }}" style="position:absolute;inset:0;background:{{ theme.backdrop }};z-index:60;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
+        <div onClick="{{ stop }}" style="background:{{ theme.modalBg }};border-radius:18px;box-shadow:0 20px 50px rgba(0,0,0,0.25);width:100%;max-width:340px;max-height:78%;display:flex;flex-direction:column;overflow:hidden;animation:brb-pop .18s ease">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;border-bottom:1px solid {{ theme.border }}">
+            <div style="font-family:'Literata',Georgia,serif;font-size:16px;font-weight:700;color:{{ theme.text }}">Go to passage</div>
+            <button onClick="{{ closeSheet }}" style="background:none;border:none;color:{{ theme.textFaint }};font-size:18px;cursor:pointer">✕</button>
+          </div>
+          <div style="display:flex;flex:1;min-height:0">
+            <div ref="{{ pickerListRef }}" style="width:126px;flex-shrink:0;overflow-y:auto;border-right:1px solid {{ theme.border }};padding:6px 0">
+              <sc-for list="{{ pickerBooksList }}" as="b" hint-placeholder-count="12">
+                <button id="{{ b.id }}" onClick="{{ b.onSelect }}" style="{{ b.rowStyle }}">{{ b.name }}</button>
+              </sc-for>
+            </div>
+            <div style="flex:1;overflow-y:auto;padding:14px">
+              <div style="font-size:11.5px;font-weight:700;color:{{ theme.textFaint }};margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em">{{ pickerBookName }} — chapter</div>
+              <div ref="{{ pickerChapterRef }}" style="display:grid;grid-template-columns:repeat(5,1fr);gap:7px">
+                <sc-for list="{{ pickerChapters }}" as="c" hint-placeholder-count="12">
+                  <button id="{{ c.id }}" onClick="{{ c.onSelect }}" style="{{ c.style }}">{{ c.num }}</button>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
 
-        const bookSelect = document.getElementById('bookSelect');
-        const chapterSelect = document.getElementById('chapterSelect');
-        const leftPane = document.getElementById('leftPane');
-        const rightPane = document.getElementById('rightPane');
-        const versionLeft = document.getElementById('versionLeft');
-        const versionRight = document.getElementById('versionRight');
-       
-        // SEARCH
-        let lastSearchResults = ""; // This "saves" your results in memory
+    <sc-if value="{{ showVerLeft }}">
+      <div onClick="{{ closeSheet }}" style="position:absolute;inset:0;background:{{ theme.backdrop }};z-index:60;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
+        <div onClick="{{ stop }}" style="background:{{ theme.modalBg }};border-radius:18px;box-shadow:0 20px 50px rgba(0,0,0,0.25);width:100%;max-width:300px;max-height:70%;display:flex;flex-direction:column;overflow:hidden;animation:brb-pop .18s ease">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;border-bottom:1px solid {{ theme.border }}">
+            <div style="font-family:'Literata',Georgia,serif;font-size:16px;font-weight:700;color:{{ theme.text }}">Left translation</div>
+            <button onClick="{{ closeSheet }}" style="background:none;border:none;color:{{ theme.textFaint }};font-size:18px;cursor:pointer">✕</button>
+          </div>
+          <div style="padding:10px 12px 16px;overflow-y:auto">
+            <sc-for list="{{ versionOptionsLeft }}" as="o" hint-placeholder-count="3">
+              <button onClick="{{ o.onSelect }}" style="{{ o.style }}">{{ o.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </sc-if>
 
-        function runSearch() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            const scope = document.getElementById('searchScope').value;
-            
-            if (query.length < 3) {
-                alert("Please enter at least 3 characters.");
-                return;
-            }
+    <sc-if value="{{ showVerRight }}">
+      <div onClick="{{ closeSheet }}" style="position:absolute;inset:0;background:{{ theme.backdrop }};z-index:60;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
+        <div onClick="{{ stop }}" style="background:{{ theme.modalBg }};border-radius:18px;box-shadow:0 20px 50px rgba(0,0,0,0.25);width:100%;max-width:300px;max-height:70%;display:flex;flex-direction:column;overflow:hidden;animation:brb-pop .18s ease">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;border-bottom:1px solid {{ theme.border }}">
+            <div style="font-family:'Literata',Georgia,serif;font-size:16px;font-weight:700;color:{{ theme.text }}">Right translation</div>
+            <button onClick="{{ closeSheet }}" style="background:none;border:none;color:{{ theme.textFaint }};font-size:18px;cursor:pointer">✕</button>
+          </div>
+          <div style="padding:10px 12px 16px;overflow-y:auto">
+            <sc-for list="{{ versionOptionsRight }}" as="o" hint-placeholder-count="3">
+              <button onClick="{{ o.onSelect }}" style="{{ o.style }}">{{ o.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </sc-if>
 
-            const leftVer = bibles[versionLeft.value];
-            const rightVer = bibles[versionRight.value];
-            
-            let resultsHTML = `<div style="padding: 20px;">
-                <h3>Results for: "${query}" (${scope.toUpperCase()})</h3>
-                <button class="back-btn" onclick="renderChapter()">← Close Search</button>
-                <hr>`;
+    <sc-if value="{{ showSearchModal }}">
+      <div onClick="{{ closeSearchModal }}" style="position:absolute;inset:0;background:{{ theme.backdrop }};z-index:60;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
+        <div onClick="{{ stop }}" style="background:{{ theme.modalBg }};border-radius:18px;box-shadow:0 20px 50px rgba(0,0,0,0.25);width:100%;max-width:360px;max-height:82%;display:flex;flex-direction:column;overflow:hidden;animation:brb-pop .18s ease">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;border-bottom:1px solid {{ theme.border }}">
+            <div style="font-family:'Literata',Georgia,serif;font-size:16px;font-weight:700;color:{{ theme.text }}">Search scripture</div>
+            <button onClick="{{ closeSearchModal }}" style="background:none;border:none;color:{{ theme.textFaint }};font-size:18px;cursor:pointer">✕</button>
+          </div>
+          <div style="padding:14px 18px 10px">
+            <div style="display:flex;gap:8px;margin-bottom:10px">
+              <input type="text" value="{{ searchQuery }}" onChange="{{ onSearchChange }}" onKeyDown="{{ onSearchKeyDown }}" placeholder="Search verses…" style="{{ searchInputStyle }}"/>
+              <button onClick="{{ runSearchClick }}" style="{{ searchBtnStyle }}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#fff" stroke-width="2.2"/><line x1="16.5" y1="16.5" x2="21" y2="21" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
+              </button>
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:4px">
+              <button onClick="{{ setScopeAll }}" style="{{ scopeAllStyle }}">All</button>
+              <button onClick="{{ setScopeOt }}" style="{{ scopeOtStyle }}">Old Testament</button>
+              <button onClick="{{ setScopeNt }}" style="{{ scopeNtStyle }}">New Testament</button>
+            </div>
+            <sc-if value="{{ showSearchHint }}">
+              <div style="font-size:12px;color:{{ theme.accent }};margin-top:6px">Type at least 3 characters.</div>
+            </sc-if>
+          </div>
+          <div style="flex:1;overflow-y:auto;padding:4px 10px 16px;border-top:1px solid {{ theme.border }}">
+            <sc-for list="{{ searchResultsList }}" as="r" hint-placeholder-count="4">
+              <div onClick="{{ r.onJump }}" style="padding:12px 8px;border-bottom:1px solid {{ theme.border }};cursor:pointer">
+                <div style="font-size:12.5px;font-weight:800;color:{{ theme.accent }};margin-bottom:4px">{{ r.ref }}</div>
+                <div style="font-family:'Literata',Georgia,serif;font-size:13.5px;color:{{ theme.verseText }};margin-bottom:2px;line-height:1.5">{{ r.textL }}</div>
+                <div style="font-family:'Literata',Georgia,serif;font-size:12.5px;color:{{ theme.textSub }};font-style:italic;line-height:1.5">{{ r.textR }}</div>
+              </div>
+            </sc-for>
+            <sc-if value="{{ noResults }}">
+              <div style="padding:30px 10px;text-align:center;color:{{ theme.textFaint }};font-size:13.5px">No matches found.</div>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+  </sc-if>
+</div>
 
-            let matchCount = 0;
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;baseFontSize&quot;: {&quot;editor&quot;: &quot;range&quot;, &quot;default&quot;: 18, &quot;min&quot;: 14, &quot;max&quot;: 26, &quot;step&quot;: 1, &quot;unit&quot;: &quot;px&quot;, &quot;tsType&quot;: &quot;number&quot;, &quot;section&quot;: &quot;Reading&quot;},
+  &quot;showVerseNumbers&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Reading&quot;},
+  &quot;syncScroll&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Behavior&quot;},
+  &quot;defaultDarkMode&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: false, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Behavior&quot;},
+  &quot;defaultViewMode&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;parallel&quot;, &quot;options&quot;: [&quot;parallel&quot;, &quot;single&quot;], &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Behavior&quot;}
+}">
+class Component extends DCLogic {
+  state = {
+    loading: true,
+    bibles: null, bookNames: [], chapterCounts: [], labels: {}, available: [],
+    bookIdx: 0, chapterIdx: 0,
+    versionLeft: null, versionRight: null,
+    fontSize: null,
+    sheet: null, // 'picker' | 'verLeft' | 'verRight'
+    pickerBookIdx: null,
+    fabOpen: false, showFontPopover: false, showSearchModal: false,
+    searchQuery: '', searchScope: 'all', showSearchHint: false,
+    searchResults: [], searchRan: false,
+    collapsed: false,
+    darkMode: false,
+    viewMode: 'parallel', singleSide: 'left',
+  };
 
-            leftVer.books.forEach((book, bIdx) => {
-                // Filter Logic
-                // Old Testament is roughly index 0-38, New Testament 39-65
-                if (scope === 'ot' && bIdx > 38) return;
-                if (scope === 'nt' && bIdx < 39) return;
+  activeSide = null;
+  shortLabels = { kjv: 'KJV', vie1934: '1934', esv: 'ESV' };
 
-                book.chapters.forEach((chapter, cIdx) => {
-                    chapter.verses.forEach((verse, vIdx) => {
-                        const textL = decodeUnicode(verse.text);
-                        const rv = rightVer.books[bIdx].chapters[cIdx].verses[vIdx] || {text: ""};
-                        const textR = decodeUnicode(rv.text);
+  LIGHT = {
+    bg0: '#F5F8FC', bg1: '#FFFFFF', bg2: '#EAF1FE',
+    text: '#16233A', textSub: '#4C6C94', textFaint: '#8FA6C2',
+    accent: '#1D4ED8', verseText: '#1B2A40', border: '#DCE7F6',
+    modalBg: '#FFFFFF', backdrop: 'rgba(15,23,42,0.42)', fabShadow: 'rgba(29,78,216,0.35)',
+  };
+  DARK = {
+    bg0: '#0B1220', bg1: '#111C2E', bg2: '#1A2740',
+    text: '#E7EEF9', textSub: '#8AA0BF', textFaint: '#5D7396',
+    accent: '#5B9CFF', verseText: '#D7E2F3', border: '#22314A',
+    modalBg: '#16202F', backdrop: 'rgba(0,0,0,0.6)', fabShadow: 'rgba(91,156,255,0.4)',
+  };
 
-                        if (textL.toLowerCase().includes(query) || textR.toLowerCase().includes(query)) {
-                            matchCount++;
-                            resultsHTML += `
-                                <div style="margin-bottom: 20px; cursor: pointer; border-bottom: 1px solid #eee; padding-bottom: 10px;" 
-                                    onclick="goToVerse(${bIdx}, ${cIdx})">
-                                    <b style="color: #007bff;">${book.name} ${chapter.chapter}:${verse.verse}</b><br>
-                                    <div style="font-size: 0.9em;">${textL}</div>
-                                    <div style="font-size: 0.9em; color: #666; font-style: italic;">${textR}</div>
-                                </div>`;
-                        }
-                    });
-                });
-            });
+  setLeftPaneRef = (el) => { this.leftPaneEl = el; };
+  setRightPaneRef = (el) => { this.rightPaneEl = el; };
+  setSinglePaneRef = (el) => { this.singlePaneEl = el; };
+  setPickerListRef = (el) => { this.pickerListEl = el; };
+  setPickerChapterRef = (el) => { this.pickerChapterGridEl = el; };
+  stop = (e) => { e.stopPropagation(); };
 
-            if (matchCount === 0) resultsHTML += "<p>No matches found.</p>";
-            resultsHTML += `</div>`;
+  openPicker = () => {
+    this.setState({ sheet: 'picker', pickerBookIdx: this.state.bookIdx }, () => this.scrollPickerIntoView());
+  };
 
-            lastSearchResults = resultsHTML; // Save it!
-            displaySearch();
+  scrollPickerIntoView() {
+    requestAnimationFrame(() => {
+      const listEl = this.pickerListEl;
+      if (listEl) {
+        const row = listEl.querySelector(`#pb${this.state.bookIdx}`);
+        if (row) {
+          const target = row.offsetTop - (listEl.clientHeight / 2) + (row.clientHeight / 2);
+          listEl.scrollTop = Math.max(0, target);
         }
-
-        function displaySearch() {
-            leftPane.innerHTML = lastSearchResults;
-            rightPane.innerHTML = `<div style="padding:40px; text-align:center; color:#ccc;">
-                <p>Viewing Search Results</p>
-            </div>`;
+      }
+      const gridEl = this.pickerChapterGridEl;
+      if (gridEl) {
+        const cell = gridEl.querySelector(`#pc${this.state.chapterIdx}`);
+        if (cell) {
+          const target = cell.offsetTop - (gridEl.clientHeight / 2) + (cell.clientHeight / 2);
+          gridEl.scrollTop = Math.max(0, target);
         }
+      }
+    });
+  }
 
-        // Update goToVerse to show a "Return to Search" button in the reading view
-        function goToVerse(bIdx, cIdx) {
-            currentBookIdx = bIdx;
-            currentChapterIdx = cIdx;
-            bookSelect.value = bIdx;
-            updateChapterDropdown();
-            chapterSelect.value = cIdx;
-            
-            renderChapter();
+  async componentDidMount() {
+    const mod = await import('./bible-data.js');
+    this.decodeUnicode = mod.decodeUnicode;
+    this.OT_NT_SPLIT = mod.OT_NT_SPLIT;
+    const data = await mod.loadBibles();
+    const vLeft = data.available[0] || null;
+    const vRight = data.available[1] || data.available[0] || null;
+    const defaultBookIdx = data.bookNames.findIndex(n => n === 'Matthew');
+    this.setState({
+      loading: false,
+      bibles: data.bibles, bookNames: data.bookNames, chapterCounts: data.chapterCounts,
+      labels: data.labels, available: data.available,
+      versionLeft: vLeft, versionRight: vRight,
+      bookIdx: defaultBookIdx >= 0 ? defaultBookIdx : 0, chapterIdx: 0,
+      fontSize: this.props.baseFontSize ?? 18,
+      darkMode: this.props.defaultDarkMode ?? false,
+      viewMode: this.props.defaultViewMode ?? 'parallel',
+    });
+  }
 
-            // Add a temporary "Return to Search" button at the top of the panes
-            const returnBtn = `<button id="retSearch" onclick="displaySearch()" 
-                style="position:fixed; bottom:20px; left:50%; transform:translateX(-50%); z-index:1000; background:#2d3748; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-                Back to Results
-            </button>`;
-            document.body.insertAdjacentHTML('beforeend', returnBtn);
-        }
+  resetScroll() {
+    [this.leftPaneEl, this.rightPaneEl, this.singlePaneEl].forEach(el => { if (el) el.scrollTop = 0; });
+    if (this.state.collapsed) this.setState({ collapsed: false });
+  }
 
-        // We need to remove that button whenever we navigate normally
-        function clearReturnButton() {
-            const btn = document.getElementById('retSearch');
-            if (btn) btn.remove();
-        }
+  updateCollapsed(el) {
+    if (!el) return;
+    const shouldCollapse = el.scrollTop > 18;
+    if (shouldCollapse !== this.state.collapsed) this.setState({ collapsed: shouldCollapse });
+  }
 
+  syncScroll(source, target, targetPrefix) {
+    if (this.props.syncScroll === false) return;
+    if (this.isSyncing || this.activeSide !== source) return;
+    window.requestAnimationFrame(() => {
+      this.isSyncing = true;
+      const items = source.querySelectorAll('[id^="L"],[id^="R"]');
+      if (!items.length) { this.isSyncing = false; return; }
+      const scrollTop = source.scrollTop;
+      let idx = 0;
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].offsetTop <= scrollTop + 2) idx = i; else break;
+      }
+      const cur = items[idx];
+      const nextEl = items[idx + 1];
+      let frac = 0;
+      if (nextEl) {
+        const span = nextEl.offsetTop - cur.offsetTop;
+        frac = span > 0 ? Math.min(1, Math.max(0, (scrollTop - cur.offsetTop) / span)) : 0;
+      }
+      const targetCur = target.querySelector(`#${targetPrefix}${idx}`);
+      const targetNext = target.querySelector(`#${targetPrefix}${idx + 1}`);
+      if (targetCur) {
+        let top = targetCur.offsetTop;
+        if (targetNext) top += frac * (targetNext.offsetTop - targetCur.offsetTop);
+        target.scrollTop = top;
+      }
+      setTimeout(() => { this.isSyncing = false; }, 16);
+    });
+  }
 
+  goToChapter(bIdx, cIdx) {
+    this.setState({
+      bookIdx: bIdx, chapterIdx: cIdx, pickerBookIdx: null, sheet: null,
+      showSearchModal: false, fabOpen: false, showFontPopover: false,
+    }, () => this.resetScroll());
+  }
 
+  setVersion(side, key) {
+    this.setState({ [side]: key, sheet: null }, () => this.resetScroll());
+  }
 
-        // 1. DATA LOADING & ADAPTERS
-        function decodeUnicode(str) {
-            if (!str) return "";
-            return str.replace(/\\u([\d\w]{4})/gi, (match, grp) => String.fromCharCode(parseInt(grp, 16)));
-        }
+  renderVals() {
+    const s = this.state;
+    const ready = !s.loading && !!s.bibles;
+    const noData = !s.loading && !s.bibles;
+    const theme = s.darkMode ? this.DARK : this.LIGHT;
+    const collapsed = s.collapsed;
 
-        function formatESV(raw) {
-            let structured = { books: [] };
-            let bookMap = {};
-            raw.forEach(item => {
-                const parts = item.r.split(':');
-                if (parts.length < 4) return;
-                const bookName = parts[1];
-                const chapterNum = parseInt(parts[2]);
-                const verseNum = parseInt(parts[3]);
+    const headerTitle = ready ? `${s.bookNames[s.bookIdx]} ${s.chapterIdx + 1}` : '';
+    const shortOf = (k) => this.shortLabels[k] || (s.labels[k] || k).slice(0, 6).toUpperCase();
 
-                if (!bookMap[bookName]) {
-                    bookMap[bookName] = { name: bookName, chapters: [] };
-                    structured.books.push(bookMap[bookName]);
-                }
-                let chapter = bookMap[bookName].chapters.find(c => c.chapter === chapterNum);
-                if (!chapter) {
-                    chapter = { chapter: chapterNum, verses: [] };
-                    bookMap[bookName].chapters.push(chapter);
-                }
-                chapter.verses.push({ verse: verseNum, text: item.t.replace('*p ', '') });
-            });
-            return structured;
-        }
+    const computeVerses = (versionKey) => {
+      if (!ready || !versionKey) return [];
+      const bible = s.bibles[versionKey];
+      const book = bible && bible.books[s.bookIdx];
+      const ch = book && book.chapters[s.chapterIdx];
+      if (!ch) return [];
+      return ch.verses.map(v => ({ num: v.verse, text: this.decodeUnicode(v.text) }));
+    };
 
-        async function loadFiles() {
-            try {
-                const kjvRes = await fetch('./kjv.json');
-                bibles.kjv = await kjvRes.json();
-                
-                const vieRes = await fetch('./vie1934.json');
-                bibles.vie1934 = await vieRes.json();
+    const pickerBookIdx = s.pickerBookIdx ?? s.bookIdx;
+    const pickerBooksList = ready ? s.bookNames.map((name, idx) => ({
+      idx, name,
+      onSelect: () => this.setState({ pickerBookIdx: idx }),
+      rowStyle: `display:block;width:100%;text-align:left;padding:9px 16px;border:none;background:${idx === pickerBookIdx ? theme.bg2 : 'transparent'};color:${idx === pickerBookIdx ? theme.accent : theme.text};font-weight:${idx === pickerBookIdx ? '800' : '600'};font-size:13.5px;cursor:pointer;font-family:inherit`,
+    })) : [];
+    const chCount = ready ? (s.chapterCounts[pickerBookIdx] || 0) : 0;
+    const pickerChapters = ready ? Array.from({ length: chCount }, (_, i) => ({
+      num: i + 1, idx: i,
+      onSelect: () => this.goToChapter(pickerBookIdx, i),
+      style: `height:36px;border-radius:9px;border:none;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;background:${(i === s.chapterIdx && pickerBookIdx === s.bookIdx) ? theme.accent : theme.bg2};color:${(i === s.chapterIdx && pickerBookIdx === s.bookIdx) ? '#fff' : theme.text}`,
+    })) : [];
+    // stable per-row ids so the sheet can scroll the current book/chapter into view on open
+    pickerBooksList.forEach(b => { b.id = `pb${b.idx}`; });
+    pickerChapters.forEach(c => { c.id = `pc${c.idx}`; });
 
-                try {
-                    const esvRes = await fetch('./esv.json');
-                    const esvRaw = await esvRes.json();
-                    bibles.esv = formatESV(esvRaw);
-                    // Add ESV to dropdown if not there
-                    if (![...versionLeft.options].some(o => o.value === 'esv')) {
-                        let opt = document.createElement('option');
-                        opt.value = 'esv'; opt.textContent = 'English (ESV)';
-                        versionLeft.appendChild(opt);
-                    }
-                } catch(e) { console.log("ESV file skipped."); }
+    const versionRow = (side, current) => ready ? s.available.map(k => ({
+      key: k, label: s.labels[k],
+      onSelect: () => this.setVersion(side, k),
+      style: `display:block;width:100%;text-align:left;padding:12px 14px;border-radius:10px;border:none;margin-bottom:4px;font-size:14px;font-weight:${k === current ? '800' : '600'};cursor:pointer;font-family:inherit;background:${k === current ? theme.bg2 : 'transparent'};color:${k === current ? theme.accent : theme.text}`,
+    })) : [];
 
-                populateBooks();
-                renderChapter();
-            } catch (err) {
-                console.error("Load error:", err);
-            }
-        }
+    const scopeStyle = (val) => `flex:1;height:32px;border-radius:8px;border:none;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;background:${s.searchScope === val ? theme.accent : theme.bg2};color:${s.searchScope === val ? '#fff' : theme.textSub}`;
 
-        // 2. UI POPULATION
-        function populateBooks() {
-            bookSelect.innerHTML = '';
-            bibles.kjv.books.forEach((book, index) => {
-                let opt = document.createElement('option');
-                opt.value = index; opt.textContent = book.name;
-                bookSelect.appendChild(opt);
-            });
-            updateChapterDropdown();
-        }
+    const miniStyle = `width:44px;height:44px;border-radius:999px;background:${theme.bg1};border:none;box-shadow:0 6px 16px rgba(0,0,0,0.18);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:${theme.accent};font-family:inherit;transition:all .18s ease,background-color .25s ease;opacity:${s.fabOpen ? 1 : 0};transform:translateY(${s.fabOpen ? 0 : 10}px);pointer-events:${s.fabOpen ? 'auto' : 'none'};`;
+    const mainFabStyle = `width:56px;height:56px;border-radius:999px;background:${theme.accent};border:none;box-shadow:0 8px 20px ${theme.fabShadow};cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background-color .25s ease;`;
 
-        function updateChapterDropdown() {
-            chapterSelect.innerHTML = '';
-            const book = bibles.kjv.books[currentBookIdx];
-            book.chapters.forEach((ch, index) => {
-                let opt = document.createElement('option');
-                opt.value = index; opt.textContent = `Ch ${ch.chapter}`;
-                chapterSelect.appendChild(opt);
-            });
-        }
+    const row1BtnStyle = `width:100%;background:none;border:none;display:flex;align-items:center;justify-content:center;gap:${collapsed ? 3 : 7}px;padding:${collapsed ? '1px 16px 3px' : '6px 16px 12px'};cursor:pointer;font-family:inherit;transition:padding .22s ease,gap .22s ease;`;
+    const titleStyle = `font-family:'Literata',Georgia,serif;font-weight:700;color:${theme.text};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:font-size .22s ease,color .25s ease;font-size:${collapsed ? 12 : 19}px;line-height:1.2;`;
+    const chevronStyle = `color:${theme.accent};opacity:.8;transition:font-size .22s ease;font-size:${collapsed ? 8 : 12}px;`;
+    const row2OuterStyle = `display:flex;align-items:center;gap:8px;padding:${collapsed ? '0 14px' : '10px 14px'};max-height:${collapsed ? '0px' : '60px'};opacity:${collapsed ? 0 : 1};overflow:hidden;flex-shrink:0;background:${theme.bg1};pointer-events:${collapsed ? 'none' : 'auto'};transition:max-height .22s ease,opacity .16s ease,padding .22s ease,background-color .25s ease;`;
+    const pillStyle = `flex:1;position:relative;display:flex;background:${theme.bg2};border-radius:999px;overflow:hidden;height:40px;transition:background-color .25s ease;`;
+    const verBtnStyle = `flex:1;background:none;border:none;display:flex;align-items:center;justify-content:center;gap:5px;color:${theme.textSub};font-weight:700;cursor:pointer;font-family:inherit;transition:font-size .22s ease;font-size:${collapsed ? 9.5 : 13}px;`;
+    const singleVerBtnStyle = verBtnStyle;
+    const swapBtnStyle = `width:40px;height:40px;border-radius:999px;background:${theme.bg2};border:none;color:${theme.accent};font-size:16px;font-weight:700;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:inherit;`;
+    const fontStepBtnStyle = `width:38px;height:38px;border-radius:10px;background:${theme.bg2};border:none;color:${theme.accent};font-size:14px;font-weight:800;cursor:pointer;`;
+    const searchInputStyle = `flex:1;height:40px;border:1px solid ${theme.border};border-radius:10px;padding:0 12px;font-size:14px;box-sizing:border-box;font-family:inherit;outline:none;background:${theme.bg1};color:${theme.text};`;
+    const searchBtnStyle = `width:40px;height:40px;flex-shrink:0;border-radius:10px;background:${theme.accent};border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;`;
 
-        function renderChapter() {
-            clearReturnButton(); // Remove the search return button if it exists
-            isSyncing = true;
-            const lKey = versionLeft.value;
-            const rKey = versionRight.value;
+    const singleSide = s.singleSide;
+    const singleVerses = ready ? computeVerses(singleSide === 'left' ? s.versionLeft : s.versionRight) : [];
 
-            const leftBook = bibles[lKey].books[currentBookIdx];
-            const rightBook = bibles[rKey].books[currentBookIdx];
-            const leftCh = leftBook.chapters[currentChapterIdx];
-            const rightCh = rightBook.chapters[currentChapterIdx];
+    return {
+      loading: s.loading, noData, ready, theme,
+      headerTitle,
+      leftVersionShort: ready ? shortOf(s.versionLeft) : '',
+      rightVersionShort: ready ? shortOf(s.versionRight) : '',
+      leftPaneRef: this.setLeftPaneRef, rightPaneRef: this.setRightPaneRef,
+      onLeftScroll: () => { this.syncScroll(this.leftPaneEl, this.rightPaneEl, 'R'); this.updateCollapsed(this.leftPaneEl); },
+      onRightScroll: () => { this.syncScroll(this.rightPaneEl, this.leftPaneEl, 'L'); this.updateCollapsed(this.rightPaneEl); },
+      onLeftTouch: () => { this.activeSide = this.leftPaneEl; },
+      onRightTouch: () => { this.activeSide = this.rightPaneEl; },
+      onLeftEnter: () => { this.activeSide = this.leftPaneEl; },
+      onRightEnter: () => { this.activeSide = this.rightPaneEl; },
+      leftVerses: computeVerses(s.versionLeft),
+      rightVerses: computeVerses(s.versionRight),
+      showVerseNumbers: this.props.showVerseNumbers ?? true,
+      fontSize: s.fontSize,
+      stop: this.stop,
+      row1BtnStyle, titleStyle, chevronStyle, row2OuterStyle, pillStyle, verBtnStyle,
+      fontStepBtnStyle, searchInputStyle, searchBtnStyle,
 
-            leftPane.innerHTML = `<h2 id="L-header" class="chapter-header">${leftBook.name} ${leftCh.chapter}</h2>`;
-            rightPane.innerHTML = `<h2 id="R-header" class="chapter-header">${rightBook.name} ${rightCh.chapter}</h2>`;
+      isParallel: s.viewMode === 'parallel', isSingle: s.viewMode === 'single',
+      toggleViewMode: () => this.setState(st => ({ viewMode: st.viewMode === 'parallel' ? 'single' : 'parallel' })),
+      singleSide, singleVerses,
+      singlePaneRef: this.setSinglePaneRef,
+      onSingleScroll: () => this.updateCollapsed(this.singlePaneEl),
+      singleVersionShort: ready ? (singleSide === 'left' ? shortOf(s.versionLeft) : shortOf(s.versionRight)) : '',
+      singleVerBtnStyle, swapBtnStyle,
+      openSingleVersionSheet: () => this.setState({ sheet: singleSide === 'left' ? 'verLeft' : 'verRight' }),
+      swapSingleSide: () => this.setState(st => ({ singleSide: st.singleSide === 'left' ? 'right' : 'left' })),
 
-            leftCh.verses.forEach((v, i) => {
-                const rv = rightCh.verses[i] || { text: "...", verse: v.verse };
-                leftPane.innerHTML += `<div class="verse" id="L${i}"><span class="v-num">${v.verse}</span><span>${decodeUnicode(v.text)}</span></div>`;
-                rightPane.innerHTML += `<div class="verse" id="R${i}"><span class="v-num">${rv.verse}</span><span>${decodeUnicode(rv.text)}</span></div>`;
-            });
+      isDark: s.darkMode, isLight: !s.darkMode,
+      toggleDarkMode: () => this.setState(st => ({ darkMode: !st.darkMode })),
 
-            leftPane.scrollTop = 0;
-            rightPane.scrollTop = 0;
-            setTimeout(() => { isSyncing = false; }, 200);
-        }
+      fabOpen: s.fabOpen, fabClosed: !s.fabOpen,
+      toggleFab: () => this.setState(st => ({ fabOpen: !st.fabOpen, showFontPopover: false })),
+      closeFab: () => this.setState({ fabOpen: false }),
+      openFontPopover: () => this.setState({ showFontPopover: true, fabOpen: false }),
+      closeFontPopover: () => this.setState({ showFontPopover: false }),
+      showFontPopover: s.showFontPopover,
+      openSearchModal: () => this.setState({ showSearchModal: true, fabOpen: false }),
+      closeSearchModal: () => this.setState({ showSearchModal: false }),
+      showSearchModal: s.showSearchModal,
+      miniStyle, mainFabStyle,
+      decFont: () => this.setState({ fontSize: Math.max(12, s.fontSize - 1) }),
+      incFont: () => this.setState({ fontSize: Math.min(30, s.fontSize + 1) }),
 
-        // 3. SCROLL SYNCHRONIZATION
-        const syncScroll = (source, target, targetPrefix) => {
-            // If we are already syncing or this isn't the pane being touched, stop.
-            if (isSyncing || activePane !== source) return;
+      showPicker: s.sheet === 'picker', showVerLeft: s.sheet === 'verLeft', showVerRight: s.sheet === 'verRight',
+      openPicker: this.openPicker,
+      openVerLeft: () => this.setState({ sheet: 'verLeft' }),
+      openVerRight: () => this.setState({ sheet: 'verRight' }),
+      closeSheet: () => this.setState({ sheet: null }),
+      pickerListRef: this.setPickerListRef, pickerChapterRef: this.setPickerChapterRef,
+      pickerBooksList, pickerChapters,
+      pickerBookName: ready ? s.bookNames[pickerBookIdx] : '',
+      versionOptionsLeft: versionRow('versionLeft', s.versionLeft),
+      versionOptionsRight: versionRow('versionRight', s.versionRight),
 
-            window.requestAnimationFrame(() => {
-                isSyncing = true;
-                const sourceVerses = source.querySelectorAll('.verse');
-                const sourceRect = source.getBoundingClientRect();
-                
-                let activeIdx = 0;
+      searchQuery: s.searchQuery,
+      onSearchChange: (e) => this.setState({ searchQuery: e.target.value, showSearchHint: false }),
+      onSearchKeyDown: (e) => { if (e.key === 'Enter') this.runSearch(); },
+      runSearchClick: () => this.runSearch(),
+      setScopeAll: () => this.setState({ searchScope: 'all' }),
+      setScopeOt: () => this.setState({ searchScope: 'ot' }),
+      setScopeNt: () => this.setState({ searchScope: 'nt' }),
+      scopeAllStyle: scopeStyle('all'), scopeOtStyle: scopeStyle('ot'), scopeNtStyle: scopeStyle('nt'),
+      showSearchHint: s.showSearchHint,
+      noResults: s.searchRan && s.searchResults.length === 0,
+      searchResultsList: s.searchResults.map(r => ({
+        ref: r.ref, textL: r.textL, textR: r.textR,
+        onJump: () => this.goToChapter(r.bIdx, r.cIdx),
+      })),
+    };
+  }
 
-                // Find which verse is at the top of the CURRENT viewable area
-                for (let i = 0; i < sourceVerses.length; i++) {
-                    // We check against the top of the source pane, not the screen
-                    if (sourceVerses[i].getBoundingClientRect().top >= sourceRect.top - 10) {
-                        activeIdx = i;
-                        break;
-                    }
-                }
+  runSearch() {
+    const q = this.state.searchQuery.trim().toLowerCase();
+    if (q.length < 3) { this.setState({ showSearchHint: true }); return; }
+    const s = this.state;
+    const leftVer = s.bibles[s.versionLeft];
+    const rightVer = s.bibles[s.versionRight];
+    const scope = s.searchScope;
+    let results = [];
+    leftVer.books.forEach((book, bIdx) => {
+      if (scope === 'ot' && bIdx > this.OT_NT_SPLIT) return;
+      if (scope === 'nt' && bIdx <= this.OT_NT_SPLIT) return;
+      book.chapters.forEach((chapter, cIdx) => {
+        chapter.verses.forEach((verse, vIdx) => {
+          const textL = this.decodeUnicode(verse.text);
+          const rBook = rightVer.books[bIdx];
+          const rCh = rBook && rBook.chapters[cIdx];
+          const rv = (rCh && rCh.verses[vIdx]) || { text: '' };
+          const textR = this.decodeUnicode(rv.text);
+          if (textL.toLowerCase().includes(q) || textR.toLowerCase().includes(q)) {
+            results.push({ bIdx, cIdx, ref: `${book.name} ${chapter.chapter}:${verse.verse}`, textL, textR });
+          }
+        });
+      });
+    });
+    this.setState({ searchResults: results.slice(0, 200), searchRan: true, showSearchHint: false });
+  }
+}
 
-                // Find the matching verse in the other pane
-                const targetVerse = target.querySelector(`#${targetPrefix}${activeIdx}`);
-                if (targetVerse) {
-                    // OffsetTop is relative to the parent container, which is perfect for us
-                    target.scrollTop = targetVerse.offsetTop;
-                }
-
-                // Release the lock quickly for a responsive feel
-                setTimeout(() => { isSyncing = false; }, 20);
-            });
-        };
-
-        // Listeners
-        // Desktop Mouse Support
-        leftPane.onmouseenter = () => { activePane = leftPane; };
-        rightPane.onmouseenter = () => { activePane = rightPane; };
-
-        // Mobile Touch Support (The Fix)
-        leftPane.ontouchstart = () => { activePane = leftPane; };
-        rightPane.ontouchstart = () => { activePane = rightPane; };
-
-        // Ensure the scroll logic is using the passive: true option for mobile performance
-        leftPane.addEventListener('scroll', () => syncScroll(leftPane, rightPane, 'R'), { passive: true });
-        rightPane.addEventListener('scroll', () => syncScroll(rightPane, leftPane, 'L'), { passive: true });
-
-        // Remove the old .onscroll assignments if they are still there
-        leftPane.onscroll = null;
-        rightPane.onscroll = null;
-
-        bookSelect.onchange = (e) => { currentBookIdx = parseInt(e.target.value); currentChapterIdx = 0; updateChapterDropdown(); renderChapter(); };
-        chapterSelect.onchange = (e) => { currentChapterIdx = parseInt(e.target.value); renderChapter(); };
-        versionLeft.onchange = renderChapter;
-        versionRight.onchange = renderChapter;
-
-        let currentFontSize = 20; // Matches your 1.25rem start
-
-        function toggleOverlay(id) {
-            const el = document.getElementById(id);
-            // Close other overlays first
-            document.querySelectorAll('.overlay').forEach(ov => {
-                if(ov.id !== id) ov.style.display = 'none';
-            });
-            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
-        }
-
-        function changeFontSize(delta) {
-            currentFontSize += delta;
-            // Keep font within readable limits
-            if (currentFontSize < 12) currentFontSize = 12;
-            if (currentFontSize > 40) currentFontSize = 40;
-            
-            document.querySelectorAll('.pane').forEach(p => {
-                p.style.fontSize = currentFontSize + 'px';
-            });
-        }
-
-
-
-        function fixLayout() {
-            // Reset the height to the actual visual viewport
-            document.body.style.height = window.innerHeight + 'px';
-            window.scrollTo(0, 0);
-        }
-
-        window.addEventListener('resize', fixLayout);
-        window.addEventListener('orientationchange', () => setTimeout(fixLayout, 300));
-
-        // Run immediately
-        fixLayout();
-
-        loadFiles();
-
-    </script>
+</script>
 </body>
 </html>
