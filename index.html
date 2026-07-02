@@ -16,7 +16,7 @@
   @keyframes brb-pop { from { opacity: 0; transform: translateY(10px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
 </style>
 </helmet>
-<div style="width:100%;height:100%;display:flex;flex-direction:column;background:{{ theme.bg1 }};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;position:relative;overflow:hidden;color:{{ theme.text }};transition:background-color .25s ease,color .25s ease;box-sizing:border-box;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);padding-bottom:env(safe-area-inset-bottom)">
+<div style="width:100%;height:100%;display:flex;flex-direction:column;background:{{ theme.bg1 }};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;position:relative;overflow:hidden;color:{{ theme.text }};transition:background-color .25s ease,color .25s ease">
 
   <sc-if value="{{ loading }}" hint-placeholder-val="{{ true }}">
     <div style="flex:1;display:flex;align-items:center;justify-content:center;background:{{ theme.bg1 }}">
@@ -307,10 +307,10 @@ class Component extends DCLogic {
   syncRootBackground(theme) {
     // html/body sit outside this component's own subtree, so their
     // background has to be set imperatively rather than via {{ theme }} —
-    // otherwise the safe-area strips on the sides (landscape notch/rounded
-    // corners) fall back to the browser's default white.
-    document.documentElement.style.backgroundColor = theme.bg0;
-    document.body.style.backgroundColor = theme.bg0;
+    // otherwise any sliver visible outside the app (e.g. during resize/
+    // rotation) falls back to the browser's default white.
+    document.documentElement.style.backgroundColor = theme.bg1;
+    document.body.style.backgroundColor = theme.bg1;
   }
 
   setLeftPaneRef = (el) => { this.leftPaneEl = el; };
