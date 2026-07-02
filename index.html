@@ -3,6 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Without these, "Add to Home Screen" still opens inside Safari with a
+     minimal toolbar reserved at the bottom for its own controls (share,
+     back/forward) — that strip is native browser chrome, not part of this
+     page, so no CSS here can ever fill it. These tell iOS/Android to treat
+     this as a genuine standalone app instead, with zero reserved chrome. -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
 <style>
   /* The dc-runtime injects its own html,body{height:100%} rule at boot,
      appended after this tag — so it would normally win. !important forces
