@@ -16,7 +16,7 @@
   @keyframes brb-pop { from { opacity: 0; transform: translateY(10px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
 </style>
 </helmet>
-<div style="width:100%;height:100%;display:flex;flex-direction:column;background:{{ theme.bg0 }};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;position:relative;overflow:hidden;color:{{ theme.text }};transition:background-color .25s ease,color .25s ease;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)">
+<div style="width:100%;height:100%;display:flex;flex-direction:column;background:{{ theme.bg0 }};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;position:relative;overflow:hidden;color:{{ theme.text }};transition:background-color .25s ease,color .25s ease">
 
   <sc-if value="{{ loading }}" hint-placeholder-val="{{ true }}">
     <div style="flex:1;display:flex;align-items:center;justify-content:center;background:{{ theme.bg0 }}">
@@ -33,7 +33,7 @@
   <sc-if value="{{ ready }}">
   <div style="display:contents">
     <!-- Header row 1: reference -->
-    <div style="background:{{ theme.bg1 }};flex-shrink:0;border-bottom:1px solid {{ theme.border }};transition:background-color .25s ease,border-color .25s ease">
+    <div style="background:{{ theme.bg1 }};flex-shrink:0;border-bottom:1px solid {{ theme.border }};transition:background-color .25s ease,border-color .25s ease;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)">
       <div style="height:env(safe-area-inset-top)"></div>
       <button onClick="{{ openPicker }}" style="{{ row1BtnStyle }}">
         <span style="{{ titleStyle }}">{{ headerTitle }}</span>
@@ -62,7 +62,7 @@
     <div style="flex:1;display:flex;overflow:hidden;position:relative">
 
       <sc-if value="{{ isParallel }}" hint-placeholder-val="{{ true }}">
-        <div ref="{{ leftPaneRef }}" onScroll="{{ onLeftScroll }}" onTouchStart="{{ onLeftTouch }}" onMouseEnter="{{ onLeftEnter }}" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 15px 90px;box-sizing:border-box;background:{{ theme.bg1 }}">
+        <div ref="{{ leftPaneRef }}" onScroll="{{ onLeftScroll }}" onTouchStart="{{ onLeftTouch }}" onMouseEnter="{{ onLeftEnter }}" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 15px 90px;box-sizing:border-box;background:{{ theme.bg1 }};padding-left:calc(15px + env(safe-area-inset-left));padding-bottom:calc(90px + env(safe-area-inset-bottom))">
           <div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:{{ theme.accent }};margin-bottom:6px">{{ leftVersionShort }}</div>
           <h2 style="font-family:'Literata',Georgia,serif;font-size:22px;font-weight:700;margin:0 0 16px;padding-bottom:10px;border-bottom:2px solid {{ theme.border }};color:{{ theme.text }}">{{ headerTitle }}</h2>
           <sc-for list="{{ leftVerses }}" as="v" hint-placeholder-count="10">
@@ -77,7 +77,7 @@
 
         <div style="width:1px;background:{{ theme.border }};flex-shrink:0"></div>
 
-        <div ref="{{ rightPaneRef }}" onScroll="{{ onRightScroll }}" onTouchStart="{{ onRightTouch }}" onMouseEnter="{{ onRightEnter }}" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 15px 90px;box-sizing:border-box;background:{{ theme.bg1 }}">
+        <div ref="{{ rightPaneRef }}" onScroll="{{ onRightScroll }}" onTouchStart="{{ onRightTouch }}" onMouseEnter="{{ onRightEnter }}" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 15px 90px;box-sizing:border-box;background:{{ theme.bg1 }};padding-right:calc(15px + env(safe-area-inset-right));padding-bottom:calc(90px + env(safe-area-inset-bottom))">
           <div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:{{ theme.accent }};margin-bottom:6px">{{ rightVersionShort }}</div>
           <h2 style="font-family:'Literata',Georgia,serif;font-size:22px;font-weight:700;margin:0 0 16px;padding-bottom:10px;border-bottom:2px solid {{ theme.border }};color:{{ theme.text }}">{{ headerTitle }}</h2>
           <sc-for list="{{ rightVerses }}" as="v" hint-placeholder-count="10">
@@ -92,7 +92,7 @@
       </sc-if>
 
       <sc-if value="{{ isSingle }}" hint-placeholder-val="{{ false }}">
-        <div ref="{{ singlePaneRef }}" onScroll="{{ onSingleScroll }}" onTouchStart="{{ onSingleTouch }}" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 15px 90px;box-sizing:border-box;background:{{ theme.bg1 }}">
+        <div ref="{{ singlePaneRef }}" onScroll="{{ onSingleScroll }}" onTouchStart="{{ onSingleTouch }}" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 15px 90px;box-sizing:border-box;background:{{ theme.bg1 }};padding-left:calc(15px + env(safe-area-inset-left));padding-right:calc(15px + env(safe-area-inset-right));padding-bottom:calc(90px + env(safe-area-inset-bottom))">
           <div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:{{ theme.accent }};margin-bottom:6px">{{ singleVersionShort }}</div>
           <h2 style="font-family:'Literata',Georgia,serif;font-size:22px;font-weight:700;margin:0 0 16px;padding-bottom:10px;border-bottom:2px solid {{ theme.border }};color:{{ theme.text }}">{{ headerTitle }}</h2>
           <sc-for list="{{ singleVerses }}" as="v" hint-placeholder-count="10">
@@ -107,7 +107,7 @@
       </sc-if>
 
       <!-- FAB speed-dial -->
-      <div style="position:absolute;right:16px;bottom:22px;z-index:53;display:flex;flex-direction:column;align-items:center;gap:10px">
+      <div style="position:absolute;right:calc(16px + env(safe-area-inset-right));bottom:calc(22px + env(safe-area-inset-bottom));z-index:53;display:flex;flex-direction:column;align-items:center;gap:10px">
         <button onClick="{{ toggleDarkMode }}" style="{{ miniStyle }}">
           <sc-if value="{{ isLight }}" hint-placeholder-val="{{ true }}">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M20.5 14.5A8.5 8.5 0 119.5 3.5a7 7 0 0011 11z" fill="{{ theme.accent }}"/></svg>
@@ -477,7 +477,7 @@ class Component extends DCLogic {
     const row1BtnStyle = `width:100%;background:none;border:none;display:flex;align-items:center;justify-content:center;gap:${collapsed ? 3 : 7}px;padding:${collapsed ? '1px 16px 3px' : '6px 16px 12px'};cursor:pointer;font-family:inherit;transition:padding .22s ease,gap .22s ease;`;
     const titleStyle = `font-family:'Literata',Georgia,serif;font-weight:700;color:${theme.text};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:font-size .22s ease,color .25s ease;font-size:${collapsed ? 12 : 19}px;line-height:1.2;`;
     const chevronStyle = `color:${theme.accent};opacity:.8;transition:font-size .22s ease;font-size:${collapsed ? 8 : 12}px;`;
-    const row2OuterStyle = `display:flex;align-items:center;gap:8px;padding:${collapsed ? '0 14px' : '10px 14px'};max-height:${collapsed ? '0px' : '60px'};opacity:${collapsed ? 0 : 1};overflow:hidden;flex-shrink:0;background:${theme.bg1};pointer-events:${collapsed ? 'none' : 'auto'};transition:max-height .22s ease,opacity .16s ease,padding .22s ease,background-color .25s ease;`;
+    const row2OuterStyle = `display:flex;align-items:center;gap:8px;padding:${collapsed ? '0 14px' : '10px 14px'};max-height:${collapsed ? '0px' : '60px'};opacity:${collapsed ? 0 : 1};overflow:hidden;flex-shrink:0;background:${theme.bg1};pointer-events:${collapsed ? 'none' : 'auto'};transition:max-height .22s ease,opacity .16s ease,padding .22s ease,background-color .25s ease;padding-left:calc(${collapsed ? '0px' : '14px'} + env(safe-area-inset-left));padding-right:calc(${collapsed ? '0px' : '14px'} + env(safe-area-inset-right));`;
     const pillStyle = `flex:1;position:relative;display:flex;background:${theme.bg2};border-radius:999px;overflow:hidden;height:40px;transition:background-color .25s ease;`;
     const verBtnStyle = `flex:1;background:none;border:none;display:flex;align-items:center;justify-content:center;gap:5px;color:${theme.textSub};font-weight:700;cursor:pointer;font-family:inherit;transition:font-size .22s ease;font-size:${collapsed ? 9.5 : 13}px;`;
     const singleVerBtnStyle = verBtnStyle;
