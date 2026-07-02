@@ -77,10 +77,10 @@
     </div>
 
     <!-- Reading area -->
-    <div style="flex:1;display:flex;overflow:hidden;position:relative">
+    <div style="flex:1;display:flex;overflow:hidden;position:relative;min-height:0">
 
       <sc-if value="{{ isParallel }}" hint-placeholder-val="{{ true }}">
-        <div ref="{{ leftPaneRef }}" onScroll="{{ onLeftScroll }}" onTouchStart="{{ onLeftTouch }}" onMouseEnter="{{ onLeftEnter }}" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 15px 90px;box-sizing:border-box;background:{{ theme.bg1 }}">
+        <div ref="{{ leftPaneRef }}" onScroll="{{ onLeftScroll }}" onTouchStart="{{ onLeftTouch }}" onMouseEnter="{{ onLeftEnter }}" style="flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 15px 90px;box-sizing:border-box;background:{{ theme.bg1 }}">
           <div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:{{ theme.accent }};margin-bottom:6px">{{ leftVersionShort }}</div>
           <h2 style="font-family:'Literata',Georgia,serif;font-size:22px;font-weight:700;margin:0 0 16px;padding-bottom:10px;border-bottom:2px solid {{ theme.border }};color:{{ theme.text }}">{{ headerTitle }}</h2>
           <sc-for list="{{ leftVerses }}" as="v" hint-placeholder-count="10">
@@ -95,7 +95,7 @@
 
         <div style="width:1px;background:{{ theme.border }};flex-shrink:0"></div>
 
-        <div ref="{{ rightPaneRef }}" onScroll="{{ onRightScroll }}" onTouchStart="{{ onRightTouch }}" onMouseEnter="{{ onRightEnter }}" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 15px 90px;box-sizing:border-box;background:{{ theme.bg1 }}">
+        <div ref="{{ rightPaneRef }}" onScroll="{{ onRightScroll }}" onTouchStart="{{ onRightTouch }}" onMouseEnter="{{ onRightEnter }}" style="flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 15px 90px;box-sizing:border-box;background:{{ theme.bg1 }}">
           <div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:{{ theme.accent }};margin-bottom:6px">{{ rightVersionShort }}</div>
           <h2 style="font-family:'Literata',Georgia,serif;font-size:22px;font-weight:700;margin:0 0 16px;padding-bottom:10px;border-bottom:2px solid {{ theme.border }};color:{{ theme.text }}">{{ headerTitle }}</h2>
           <sc-for list="{{ rightVerses }}" as="v" hint-placeholder-count="10">
@@ -110,7 +110,7 @@
       </sc-if>
 
       <sc-if value="{{ isSingle }}" hint-placeholder-val="{{ false }}">
-        <div ref="{{ singlePaneRef }}" onScroll="{{ onSingleScroll }}" onTouchStart="{{ onSingleTouch }}" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 15px 90px;box-sizing:border-box;background:{{ theme.bg1 }}">
+        <div ref="{{ singlePaneRef }}" onScroll="{{ onSingleScroll }}" onTouchStart="{{ onSingleTouch }}" style="flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 15px 90px;box-sizing:border-box;background:{{ theme.bg1 }}">
           <div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:{{ theme.accent }};margin-bottom:6px">{{ singleVersionShort }}</div>
           <h2 style="font-family:'Literata',Georgia,serif;font-size:22px;font-weight:700;margin:0 0 16px;padding-bottom:10px;border-bottom:2px solid {{ theme.border }};color:{{ theme.text }}">{{ headerTitle }}</h2>
           <sc-for list="{{ singleVerses }}" as="v" hint-placeholder-count="10">
