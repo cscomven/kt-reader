@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script src="./support.js"></script>
 </head>
 <body>
@@ -16,7 +16,7 @@
   @keyframes brb-pop { from { opacity: 0; transform: translateY(10px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
 </style>
 </helmet>
-<div style="width:100%;height:100%;display:flex;flex-direction:column;background:{{ theme.bg0 }};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;position:relative;overflow:hidden;color:{{ theme.text }};transition:background-color .25s ease,color .25s ease">
+<div style="width:100%;height:100%;display:flex;flex-direction:column;background:{{ theme.bg0 }};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;position:relative;overflow:hidden;color:{{ theme.text }};transition:background-color .25s ease,color .25s ease;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)">
 
   <sc-if value="{{ loading }}" hint-placeholder-val="{{ true }}">
     <div style="flex:1;display:flex;align-items:center;justify-content:center;background:{{ theme.bg0 }}">
@@ -92,7 +92,7 @@
       </sc-if>
 
       <sc-if value="{{ isSingle }}" hint-placeholder-val="{{ false }}">
-        <div ref="{{ singlePaneRef }}" onScroll="{{ onSingleScroll }}" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 15px 90px;box-sizing:border-box;background:{{ theme.bg1 }}">
+        <div ref="{{ singlePaneRef }}" onScroll="{{ onSingleScroll }}" onTouchStart="{{ onSingleTouch }}" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 15px 90px;box-sizing:border-box;background:{{ theme.bg1 }}">
           <div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:{{ theme.accent }};margin-bottom:6px">{{ singleVersionShort }}</div>
           <h2 style="font-family:'Literata',Georgia,serif;font-size:22px;font-weight:700;margin:0 0 16px;padding-bottom:10px;border-bottom:2px solid {{ theme.border }};color:{{ theme.text }}">{{ headerTitle }}</h2>
           <sc-for list="{{ singleVerses }}" as="v" hint-placeholder-count="10">
@@ -294,6 +294,25 @@ class Component extends DCLogic {
     modalBg: '#16202F', backdrop: 'rgba(0,0,0,0.6)', fabShadow: 'rgba(91,156,255,0.4)',
   };
 
+  dismissStrayOverlays() {
+    // Defensive cleanup: the font-size popover's invisible full-screen
+    // backdrop occasionally fails to dismiss on mobile (a tap near it can
+    // register as the start of a scroll gesture rather than a click), which
+    // silently blocks scrolling everywhere until something force-closes it.
+    // Touching a reading pane is a clear signal the user wants to scroll, so
+    // clear it here rather than waiting for the FAB to be tapped.
+    if (this.state.showFontPopover) this.setState({ showFontPopover: false });
+  }
+
+  syncRootBackground(theme) {
+    // html/body sit outside this component's own subtree, so their
+    // background has to be set imperatively rather than via {{ theme }} —
+    // otherwise the safe-area strips on the sides (landscape notch/rounded
+    // corners) fall back to the browser's default white.
+    document.documentElement.style.backgroundColor = theme.bg0;
+    document.body.style.backgroundColor = theme.bg0;
+  }
+
   setLeftPaneRef = (el) => { this.leftPaneEl = el; };
   setRightPaneRef = (el) => { this.rightPaneEl = el; };
   setSinglePaneRef = (el) => { this.singlePaneEl = el; };
@@ -327,6 +346,7 @@ class Component extends DCLogic {
   }
 
   async componentDidMount() {
+    this.syncRootBackground(this.state.darkMode ? this.DARK : this.LIGHT);
     const mod = await import('./bible-data.js');
     this.decodeUnicode = mod.decodeUnicode;
     this.OT_NT_SPLIT = mod.OT_NT_SPLIT;
@@ -370,17 +390,27 @@ class Component extends DCLogic {
         if (items[i].offsetTop <= scrollTop + 2) idx = i; else break;
       }
       const cur = items[idx];
-      const nextEl = items[idx + 1];
-      let frac = 0;
-      if (nextEl) {
-        const span = nextEl.offsetTop - cur.offsetTop;
-        frac = span > 0 ? Math.min(1, Math.max(0, (scrollTop - cur.offsetTop) / span)) : 0;
-      }
       const targetCur = target.querySelector(`#${targetPrefix}${idx}`);
-      const targetNext = target.querySelector(`#${targetPrefix}${idx + 1}`);
       if (targetCur) {
-        let top = targetCur.offsetTop;
-        if (targetNext) top += frac * (targetNext.offsetTop - targetCur.offsetTop);
+        let top;
+        if (idx === 0 && scrollTop < cur.offsetTop) {
+          // Still above the first verse — i.e. in the header/title zone.
+          // Interpolate from true top (0) up to verse 1's position, instead
+          // of clamping straight to verse 1, so both panes reveal or hide
+          // their header together.
+          const headerFrac = cur.offsetTop > 0 ? Math.min(1, Math.max(0, scrollTop / cur.offsetTop)) : 0;
+          top = headerFrac * targetCur.offsetTop;
+        } else {
+          const nextEl = items[idx + 1];
+          const targetNext = target.querySelector(`#${targetPrefix}${idx + 1}`);
+          let frac = 0;
+          if (nextEl) {
+            const span = nextEl.offsetTop - cur.offsetTop;
+            frac = span > 0 ? Math.min(1, Math.max(0, (scrollTop - cur.offsetTop) / span)) : 0;
+          }
+          top = targetCur.offsetTop;
+          if (targetNext) top += frac * (targetNext.offsetTop - targetCur.offsetTop);
+        }
         target.scrollTop = top;
       }
       setTimeout(() => { this.isSyncing = false; }, 16);
@@ -467,8 +497,8 @@ class Component extends DCLogic {
       leftPaneRef: this.setLeftPaneRef, rightPaneRef: this.setRightPaneRef,
       onLeftScroll: () => { this.syncScroll(this.leftPaneEl, this.rightPaneEl, 'R'); this.updateCollapsed(this.leftPaneEl); },
       onRightScroll: () => { this.syncScroll(this.rightPaneEl, this.leftPaneEl, 'L'); this.updateCollapsed(this.rightPaneEl); },
-      onLeftTouch: () => { this.activeSide = this.leftPaneEl; },
-      onRightTouch: () => { this.activeSide = this.rightPaneEl; },
+      onLeftTouch: () => { this.activeSide = this.leftPaneEl; this.dismissStrayOverlays(); },
+      onRightTouch: () => { this.activeSide = this.rightPaneEl; this.dismissStrayOverlays(); },
       onLeftEnter: () => { this.activeSide = this.leftPaneEl; },
       onRightEnter: () => { this.activeSide = this.rightPaneEl; },
       leftVerses: computeVerses(s.versionLeft),
@@ -484,13 +514,17 @@ class Component extends DCLogic {
       singleSide, singleVerses,
       singlePaneRef: this.setSinglePaneRef,
       onSingleScroll: () => this.updateCollapsed(this.singlePaneEl),
+      onSingleTouch: () => this.dismissStrayOverlays(),
       singleVersionShort: ready ? (singleSide === 'left' ? shortOf(s.versionLeft) : shortOf(s.versionRight)) : '',
       singleVerBtnStyle, swapBtnStyle,
       openSingleVersionSheet: () => this.setState({ sheet: singleSide === 'left' ? 'verLeft' : 'verRight' }),
       swapSingleSide: () => this.setState(st => ({ singleSide: st.singleSide === 'left' ? 'right' : 'left' })),
 
       isDark: s.darkMode, isLight: !s.darkMode,
-      toggleDarkMode: () => this.setState(st => ({ darkMode: !st.darkMode })),
+      toggleDarkMode: () => this.setState(
+        st => ({ darkMode: !st.darkMode }),
+        () => this.syncRootBackground(this.state.darkMode ? this.DARK : this.LIGHT)
+      ),
 
       fabOpen: s.fabOpen, fabClosed: !s.fabOpen,
       toggleFab: () => this.setState(st => ({ fabOpen: !st.fabOpen, showFontPopover: false })),
