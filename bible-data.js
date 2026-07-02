@@ -45,7 +45,6 @@ const VERSION_FILES = {
   net: { file: './net.json', label: 'NET Bible', raw: true },
   nkjv: { file: './nkjv.json', label: 'New King James Version', raw: true },
   niv: { file: './niv.json', label: 'NIV', raw: true },
-  rva: { file: './rva.json', label: 'Reina Valera Actualizada', raw: true },
 };
 
 async function loadOne(key) {
