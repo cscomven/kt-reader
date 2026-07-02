@@ -411,8 +411,8 @@ class Component extends DCLogic {
     this.decodeUnicode = mod.decodeUnicode;
     this.OT_NT_SPLIT = mod.OT_NT_SPLIT;
     const data = await mod.loadBibles();
-    const vLeft = data.available[0] || null;
-    const vRight = data.available[1] || data.available[0] || null;
+    const vLeft = data.available.includes('esv') ? 'esv' : (data.available[0] || null);
+    const vRight = data.available.includes('vie1934') ? 'vie1934' : (data.available[1] || data.available[0] || null);
     const defaultBookIdx = data.bookNames.findIndex(n => n === 'Matthew');
     this.setState({
       loading: false,
