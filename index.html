@@ -86,7 +86,7 @@
           <sc-for list="{{ leftVerses }}" as="v" hint-placeholder-count="10">
             <div id="L{{ $index }}" style="margin-bottom:15px">
               <sc-if value="{{ showVerseNumbers }}" hint-placeholder-val="{{ true }}">
-                <span style="color:{{ theme.accent }};font-weight:700;font-size:12px;margin-right:6px;vertical-align:text-top;font-family:-apple-system,system-ui,sans-serif">{{ v.num }}</span>
+                <span onClick="{{ v.onTap }}" style="color:{{ theme.accent }};font-weight:700;font-size:12px;margin-right:6px;vertical-align:text-top;font-family:-apple-system,system-ui,sans-serif;cursor:pointer;padding:2px 4px 2px 2px;margin-left:-2px;border-radius:4px">{{ v.num }}</span>
               </sc-if>
               <span style="font-family:'Literata',Georgia,serif;line-height:1.85;font-size:{{ fontSize }}px;color:{{ theme.verseText }}">{{ v.text }}</span>
             </div>
@@ -109,7 +109,7 @@
           <sc-for list="{{ rightVerses }}" as="v" hint-placeholder-count="10">
             <div id="R{{ $index }}" style="margin-bottom:15px">
               <sc-if value="{{ showVerseNumbers }}" hint-placeholder-val="{{ true }}">
-                <span style="color:{{ theme.accent }};font-weight:700;font-size:12px;margin-right:6px;vertical-align:text-top;font-family:-apple-system,system-ui,sans-serif">{{ v.num }}</span>
+                <span onClick="{{ v.onTap }}" style="color:{{ theme.accent }};font-weight:700;font-size:12px;margin-right:6px;vertical-align:text-top;font-family:-apple-system,system-ui,sans-serif;cursor:pointer;padding:2px 4px 2px 2px;margin-left:-2px;border-radius:4px">{{ v.num }}</span>
               </sc-if>
               <span style="font-family:'Literata',Georgia,serif;line-height:1.85;font-size:{{ fontSize }}px;color:{{ theme.verseText }}">{{ v.text }}</span>
             </div>
@@ -124,7 +124,7 @@
           <sc-for list="{{ singleVerses }}" as="v" hint-placeholder-count="10">
             <div style="margin-bottom:15px">
               <sc-if value="{{ showVerseNumbers }}" hint-placeholder-val="{{ true }}">
-                <span style="color:{{ theme.accent }};font-weight:700;font-size:12px;margin-right:6px;vertical-align:text-top;font-family:-apple-system,system-ui,sans-serif">{{ v.num }}</span>
+                <span onClick="{{ v.onTap }}" style="color:{{ theme.accent }};font-weight:700;font-size:12px;margin-right:6px;vertical-align:text-top;font-family:-apple-system,system-ui,sans-serif;cursor:pointer;padding:2px 4px 2px 2px;margin-left:-2px;border-radius:4px">{{ v.num }}</span>
               </sc-if>
               <span style="font-family:'Literata',Georgia,serif;line-height:1.85;font-size:{{ fontSize }}px;color:{{ theme.verseText }}">{{ v.text }}</span>
             </div>
@@ -174,6 +174,37 @@
           <button onClick="{{ decFont }}" style="{{ fontStepBtnStyle }}">A-</button>
           <div style="flex:1;text-align:center;font-size:13px;font-weight:700;color:{{ theme.textSub }}">{{ fontSize }}px</div>
           <button onClick="{{ incFont }}" style="{{ fontStepBtnStyle }}font-size:17px;">A+</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- Verse tap menu -->
+    <sc-if value="{{ showVerseMenu }}">
+      <div onClick="{{ closeVerseMenu }}" style="position:absolute;inset:0;z-index:58"></div>
+      <div onClick="{{ stop }}" style="{{ verseMenuStyle }}background:{{ theme.modalBg }};border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,0.22);padding:6px;z-index:59;min-width:160px;animation:brb-pop .12s ease">
+        <button onClick="{{ openCompare }}" style="display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:none;border:none;padding:10px 12px;border-radius:9px;font-size:14px;font-weight:600;color:{{ theme.text }};cursor:pointer;font-family:inherit;box-sizing:border-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink:0"><rect x="3" y="4" width="7" height="16" rx="1.5" stroke="{{ theme.accent }}" stroke-width="2"/><rect x="14" y="4" width="7" height="16" rx="1.5" stroke="{{ theme.accent }}" stroke-width="2"/></svg>
+          Compare
+        </button>
+      </div>
+    </sc-if>
+
+    <!-- Compare verse overlay -->
+    <sc-if value="{{ showCompare }}">
+      <div onClick="{{ closeCompare }}" style="position:absolute;inset:0;background:{{ theme.backdrop }};z-index:60;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
+        <div onClick="{{ stop }}" style="background:{{ theme.modalBg }};border-radius:18px;box-shadow:0 20px 50px rgba(0,0,0,0.25);width:100%;max-width:400px;max-height:78%;display:flex;flex-direction:column;overflow:hidden;animation:brb-pop .18s ease">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;border-bottom:1px solid {{ theme.border }}">
+            <div style="font-family:'Literata',Georgia,serif;font-size:16px;font-weight:700;color:{{ theme.text }}">{{ compareTitle }}</div>
+            <button onClick="{{ closeCompare }}" style="background:none;border:none;color:{{ theme.textFaint }};font-size:18px;cursor:pointer">✕</button>
+          </div>
+          <div style="flex:1;overflow-y:auto;padding:4px 18px 16px">
+            <sc-for list="{{ compareList }}" as="c" hint-placeholder-count="4">
+              <div style="padding:14px 0;border-bottom:1px solid {{ theme.border }}">
+                <div style="font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:{{ theme.accent }};margin-bottom:6px">{{ c.label }}</div>
+                <div style="font-family:'Literata',Georgia,serif;font-size:15px;line-height:1.7;color:{{ theme.verseText }}">{{ c.text }}</div>
+              </div>
+            </sc-for>
+          </div>
         </div>
       </div>
     </sc-if>
@@ -303,6 +334,8 @@ class Component extends DCLogic {
     darkMode: false,
     viewMode: 'parallel', singleSide: 'left',
     splitRatio: 0.5, dragging: false,
+    verseMenuNum: null, verseMenuPos: null,
+    compareVerseNum: null,
   };
 
   activeSide = null;
@@ -498,13 +531,22 @@ class Component extends DCLogic {
     const headerTitle = ready ? `${s.bookNames[s.bookIdx]} ${s.chapterIdx + 1}` : '';
     const shortOf = (k) => this.shortLabels[k] || (s.labels[k] || k).slice(0, 6).toUpperCase();
 
+    const openVerseMenu = (num, e) => {
+      e.stopPropagation();
+      this.setState({ verseMenuNum: num, verseMenuPos: { x: e.clientX, y: e.clientY } });
+    };
+
     const computeVerses = (versionKey) => {
       if (!ready || !versionKey) return [];
       const bible = s.bibles[versionKey];
       const book = bible && bible.books[s.bookIdx];
       const ch = book && book.chapters[s.chapterIdx];
       if (!ch) return [];
-      return ch.verses.map(v => ({ num: v.verse, text: this.decodeUnicode(v.text) }));
+      return ch.verses.map(v => ({
+        num: v.verse,
+        text: this.decodeUnicode(v.text),
+        onTap: (e) => openVerseMenu(v.verse, e),
+      }));
     };
 
     const pickerBookIdx = s.pickerBookIdx ?? s.bookIdx;
@@ -550,6 +592,30 @@ class Component extends DCLogic {
 
     const singleSide = s.singleSide;
     const singleVerses = ready ? computeVerses(singleSide === 'left' ? s.versionLeft : s.versionRight) : [];
+
+    const showVerseMenu = s.verseMenuNum != null;
+    const verseMenuStyle = (() => {
+      if (!s.verseMenuPos) return '';
+      const menuW = 168, menuH = 52;
+      const vw = window.innerWidth, vh = window.innerHeight;
+      let left = Math.max(10, Math.min(s.verseMenuPos.x - menuW / 2, vw - menuW - 10));
+      let top = Math.max(10, Math.min(s.verseMenuPos.y + 14, vh - menuH - 10));
+      return `position:absolute;left:${left}px;top:${top}px;`;
+    })();
+
+    const showCompare = s.compareVerseNum != null;
+    const compareTitle = showCompare ? `${s.bookNames[s.bookIdx]} ${s.chapterIdx + 1}:${s.compareVerseNum}` : '';
+    const compareList = showCompare ? s.available.map(key => {
+      const bible = s.bibles[key];
+      const book = bible && bible.books[s.bookIdx];
+      const ch = book && book.chapters[s.chapterIdx];
+      const verse = ch && ch.verses.find(v => v.verse === s.compareVerseNum);
+      return {
+        key,
+        label: s.labels[key] || key,
+        text: verse ? this.decodeUnicode(verse.text) : '(not present in this translation)',
+      };
+    }) : [];
 
     return {
       loading: s.loading, noData, ready, theme,
@@ -599,6 +665,15 @@ class Component extends DCLogic {
       openFontPopover: () => this.setState({ showFontPopover: true, fabOpen: false }),
       closeFontPopover: () => this.setState({ showFontPopover: false }),
       showFontPopover: s.showFontPopover,
+
+      showVerseMenu, verseMenuStyle,
+      closeVerseMenu: () => this.setState({ verseMenuNum: null, verseMenuPos: null }),
+      openCompare: () => this.setState({
+        verseMenuNum: null, verseMenuPos: null, compareVerseNum: this.state.verseMenuNum,
+      }),
+      showCompare, compareTitle, compareList,
+      closeCompare: () => this.setState({ compareVerseNum: null }),
+
       openSearchModal: () => this.setState({ showSearchModal: true, fabOpen: false }),
       closeSearchModal: () => this.setState({ showSearchModal: false }),
       showSearchModal: s.showSearchModal,
