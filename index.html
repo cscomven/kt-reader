@@ -77,10 +77,10 @@
     </div>
 
     <!-- Reading area -->
-    <div style="flex:1;display:flex;overflow:hidden;position:relative;min-height:0">
+    <div ref="{{ readingAreaRef }}" style="flex:1;display:flex;overflow:hidden;position:relative;min-height:0">
 
       <sc-if value="{{ isParallel }}" hint-placeholder-val="{{ true }}">
-        <div ref="{{ leftPaneRef }}" onScroll="{{ onLeftScroll }}" onTouchStart="{{ onLeftTouch }}" onMouseEnter="{{ onLeftEnter }}" style="flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 15px 90px;box-sizing:border-box;background:{{ theme.bg1 }}">
+        <div ref="{{ leftPaneRef }}" onScroll="{{ onLeftScroll }}" onTouchStart="{{ onLeftTouch }}" onMouseEnter="{{ onLeftEnter }}" style="flex:{{ leftGrow }} 1 0;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 15px 90px;box-sizing:border-box;background:{{ theme.bg1 }}">
           <div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:{{ theme.accent }};margin-bottom:6px">{{ leftVersionShort }}</div>
           <h2 style="font-family:'Literata',Georgia,serif;font-size:22px;font-weight:700;margin:0 0 16px;padding-bottom:10px;border-bottom:2px solid {{ theme.border }};color:{{ theme.text }}">{{ headerTitle }}</h2>
           <sc-for list="{{ leftVerses }}" as="v" hint-placeholder-count="10">
@@ -93,9 +93,17 @@
           </sc-for>
         </div>
 
-        <div style="width:1px;background:{{ theme.border }};flex-shrink:0"></div>
+        <div
+          onPointerDown="{{ startDrag }}"
+          onPointerMove="{{ onDragMove }}"
+          onPointerUp="{{ endDrag }}"
+          onPointerCancel="{{ endDrag }}"
+          style="width:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:col-resize;touch-action:none;position:relative;z-index:4"
+        >
+          <div style="width:{{ dragging ? '3px' : '1px' }};height:100%;background:{{ dragging ? theme.accent : theme.border }};transition:background-color .15s ease,width .1s ease"></div>
+        </div>
 
-        <div ref="{{ rightPaneRef }}" onScroll="{{ onRightScroll }}" onTouchStart="{{ onRightTouch }}" onMouseEnter="{{ onRightEnter }}" style="flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 15px 90px;box-sizing:border-box;background:{{ theme.bg1 }}">
+        <div ref="{{ rightPaneRef }}" onScroll="{{ onRightScroll }}" onTouchStart="{{ onRightTouch }}" onMouseEnter="{{ onRightEnter }}" style="flex:{{ rightGrow }} 1 0;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 15px 90px;box-sizing:border-box;background:{{ theme.bg1 }}">
           <div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:{{ theme.accent }};margin-bottom:6px">{{ rightVersionShort }}</div>
           <h2 style="font-family:'Literata',Georgia,serif;font-size:22px;font-weight:700;margin:0 0 16px;padding-bottom:10px;border-bottom:2px solid {{ theme.border }};color:{{ theme.text }}">{{ headerTitle }}</h2>
           <sc-for list="{{ rightVerses }}" as="v" hint-placeholder-count="10">
@@ -294,6 +302,7 @@ class Component extends DCLogic {
     collapsed: false,
     darkMode: false,
     viewMode: 'parallel', singleSide: 'left',
+    splitRatio: 0.5, dragging: false,
   };
 
   activeSide = null;
@@ -334,6 +343,39 @@ class Component extends DCLogic {
   setLeftPaneRef = (el) => { this.leftPaneEl = el; };
   setRightPaneRef = (el) => { this.rightPaneEl = el; };
   setSinglePaneRef = (el) => { this.singlePaneEl = el; };
+  setReadingAreaRef = (el) => { this.readingAreaEl = el; };
+
+  startDrag = (e) => {
+    this.dragging = true;
+    this._dragPointerEl = e.currentTarget;
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) {}
+    this.setState({ dragging: true });
+  };
+
+  onDragMove = (e) => {
+    if (!this.dragging || !this.readingAreaEl) return;
+    const clientX = e.clientX;
+    if (this._dragRaf) return;
+    this._dragRaf = requestAnimationFrame(() => {
+      this._dragRaf = null;
+      const rect = this.readingAreaEl.getBoundingClientRect();
+      if (!rect.width) return;
+      let ratio = (clientX - rect.left) / rect.width;
+      // Keep both panes usable — never let one shrink past 22% of the width.
+      ratio = Math.min(0.78, Math.max(0.22, ratio));
+      this.setState({ splitRatio: ratio });
+    });
+  };
+
+  endDrag = (e) => {
+    this.dragging = false;
+    if (this._dragPointerEl) {
+      try { this._dragPointerEl.releasePointerCapture(e.pointerId); } catch (_) {}
+      this._dragPointerEl = null;
+    }
+    this.setState({ dragging: false });
+  };
+
   setPickerListRef = (el) => { this.pickerListEl = el; };
   setPickerChapterRef = (el) => { this.pickerChapterGridEl = el; };
   stop = (e) => { e.stopPropagation(); };
@@ -513,6 +555,10 @@ class Component extends DCLogic {
       leftVersionShort: ready ? shortOf(s.versionLeft) : '',
       rightVersionShort: ready ? shortOf(s.versionRight) : '',
       leftPaneRef: this.setLeftPaneRef, rightPaneRef: this.setRightPaneRef,
+      readingAreaRef: this.setReadingAreaRef,
+      leftGrow: s.splitRatio, rightGrow: 1 - s.splitRatio,
+      dragging: s.dragging,
+      startDrag: this.startDrag, onDragMove: this.onDragMove, endDrag: this.endDrag,
       onLeftScroll: () => { this.syncScroll(this.leftPaneEl, this.rightPaneEl, 'R'); this.updateCollapsed(this.leftPaneEl); },
       onRightScroll: () => { this.syncScroll(this.rightPaneEl, this.leftPaneEl, 'L'); this.updateCollapsed(this.rightPaneEl); },
       onLeftTouch: () => { this.activeSide = this.leftPaneEl; this.dismissStrayOverlays(); },
