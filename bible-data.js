@@ -41,7 +41,11 @@ function formatESV(raw) {
 const VERSION_FILES = {
   kjv: { file: './kjv.json', label: 'KJV', raw: true },
   vie1934: { file: './vie1934.json', label: 'Vietnamese (1934)', raw: true },
-  esv: { file: './esv.json', label: 'ESV', raw: false },
+  esv: { file: './esv.json', label: 'ESV', raw: true },
+  net: { file: './net.json', label: 'NET Bible', raw: true },
+  nkjv: { file: './nkjv.json', label: 'New King James Version', raw: true },
+  niv: { file: './niv.json', label: 'NIV', raw: true },
+  rva: { file: './rva.json', label: 'Reina Valera Actualizada', raw: true },
 };
 
 async function loadOne(key) {
