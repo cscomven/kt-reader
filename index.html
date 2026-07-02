@@ -100,7 +100,7 @@
           onPointerCancel="{{ endDrag }}"
           style="width:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:col-resize;touch-action:none;position:relative;z-index:4"
         >
-          <div style="width:{{ dragging ? '3px' : '1px' }};height:100%;background:{{ dragging ? theme.accent : theme.border }};transition:background-color .15s ease,width .1s ease"></div>
+          <div style="width:{{ dragging ? '3px' : '2px' }};height:100%;background:{{ dragging ? theme.accent : theme.textFaint }};transition:background-color .15s ease,width .1s ease"></div>
         </div>
 
         <div ref="{{ rightPaneRef }}" onScroll="{{ onRightScroll }}" onTouchStart="{{ onRightTouch }}" onMouseEnter="{{ onRightEnter }}" style="flex:{{ rightGrow }} 1 0;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 15px 90px;box-sizing:border-box;background:{{ theme.bg1 }}">
