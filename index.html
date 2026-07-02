@@ -100,7 +100,7 @@
           onPointerCancel="{{ endDrag }}"
           style="width:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:col-resize;touch-action:none;position:relative;z-index:4"
         >
-          <div style="width:{{ dragging ? '3px' : '2px' }};height:100%;background:{{ dragging ? theme.accent : theme.textFaint }};transition:background-color .15s ease,width .1s ease"></div>
+          <div style="{{ dividerLineStyle }}"></div>
         </div>
 
         <div ref="{{ rightPaneRef }}" onScroll="{{ onRightScroll }}" onTouchStart="{{ onRightTouch }}" onMouseEnter="{{ onRightEnter }}" style="flex:{{ rightGrow }} 1 0;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 15px 90px;box-sizing:border-box;background:{{ theme.bg1 }}">
@@ -538,6 +538,8 @@ class Component extends DCLogic {
     const titleStyle = `font-family:'Literata',Georgia,serif;font-weight:700;color:${theme.text};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:font-size .22s ease,color .25s ease;font-size:${collapsed ? 12 : 19}px;line-height:1.2;`;
     const chevronStyle = `color:${theme.accent};opacity:.8;transition:font-size .22s ease;font-size:${collapsed ? 8 : 12}px;`;
     const row2OuterStyle = `display:flex;align-items:center;gap:8px;padding:${collapsed ? '0 14px' : '10px 14px'};max-height:${collapsed ? '0px' : '60px'};opacity:${collapsed ? 0 : 1};overflow:hidden;flex-shrink:0;background:${theme.bg1};pointer-events:${collapsed ? 'none' : 'auto'};transition:max-height .22s ease,opacity .16s ease,padding .22s ease,background-color .25s ease;`;
+
+    const dividerLineStyle = `width:${s.dragging ? '3px' : '2px'};height:100%;background:${s.dragging ? theme.accent : theme.textFaint};transition:background-color .15s ease,width .1s ease;`;
     const pillStyle = `flex:1;position:relative;display:flex;background:${theme.bg2};border-radius:999px;overflow:hidden;height:40px;transition:background-color .25s ease;`;
     const verBtnStyle = `flex:1;background:none;border:none;display:flex;align-items:center;justify-content:center;gap:5px;color:${theme.textSub};font-weight:700;cursor:pointer;font-family:inherit;transition:font-size .22s ease;font-size:${collapsed ? 9.5 : 13}px;`;
     const singleVerBtnStyle = verBtnStyle;
@@ -557,6 +559,7 @@ class Component extends DCLogic {
       leftPaneRef: this.setLeftPaneRef, rightPaneRef: this.setRightPaneRef,
       readingAreaRef: this.setReadingAreaRef,
       leftGrow: s.splitRatio, rightGrow: 1 - s.splitRatio,
+      dividerLineStyle,
       dragging: s.dragging,
       startDrag: this.startDrag, onDragMove: this.onDragMove, endDrag: this.endDrag,
       onLeftScroll: () => { this.syncScroll(this.leftPaneEl, this.rightPaneEl, 'R'); this.updateCollapsed(this.leftPaneEl); },
